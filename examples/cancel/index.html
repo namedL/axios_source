@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  
+
+</body>
+<script src="../../dist/axios.js"></script>
+<script>
+
+//测试 promise：  promise的then方法触发的条件为 Promise的resolve执行后立刻响应
+
+// let outerResolve ;
+// let p1 = new Promise(r=>{
+//   outerResolve = r;
+// })
+
+// p1.then(data=>{
+//   alert(data);
+// })
+
+// setTimeout(()=>{
+//   outerResolve("cancel");
+// },2000)
+
+
+//测试2  Promise(resolve, reject) ==>  then(resolveCallback,  rejectCallback)
+// 当Promise成功后，会执行resolveCallback， 失败会执行rejectCallback
+let config = {default: "100"};
+Promise.resolve(config)
+.then((config)=>{ console.log("success1", config); throw "error"; /*第一个失败后，下一个then会进入reject回调;*/ return config; },(config)=>{ console.log("fail1", config); return Promise.reject(config);})
+.then((config)=>{ console.log("success2", config); return config; },(config)=>{ console.log("fail2", config); return  Promise.reject(config) })
+.then((config)=>{ console.log("success3", config); return config; },(config)=>{ console.log("fail3", config); return  Promise.reject(config) })
+.then((config)=>{ console.log("success4", config); return config; },(config)=>{ console.log("fail4", config); return  Promise.reject(config) })
+.catch(error=>{ console.log("捕获错误："+error) })
+
+let newAxios = axios.create();
+newAxios.CancelToken = axios.CancelToken;
+
+
+
+const CancelToken = newAxios.CancelToken;
+const source = CancelToken.source();
+
+newAxios.get('https://api.github.com/users/mzabriskie', {
+  cancelToken: source.token
+}).then(data=>{
+  console.log(data);
+}).catch(function(thrown) {
+  console.log(thrown)
+  if (axios.isCancel(thrown)) {
+    console.log('Request canceled', thrown.message);
+  } else {
+     // 处理错误
+  }
+});
+
+
+//post请求：
+// axios.post('/user/12345', {
+//   name: 'new name'
+// }, {
+//   cancelToken: source.token
+// })
+
+source.cancel('请求被用户取消!');
+
+
+
+/**
+
+// 方式二：
+const CancelToken = axios.CancelToken;
+let cancel;
+
+axios.get('/user/12345', {
+  cancelToken: new CancelToken((c)=> {
+    // executor 函数接收一个 cancel 函数作为参数
+    cancel = c;
+  })
+});
+
+// cancel the request
+cancel();
+
+*/
+</script>
+</html>
